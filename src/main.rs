@@ -69,7 +69,7 @@ async fn signup(
 async fn login(
     db_pool: web::Data<DbPool>,
     res: web::Json<LoginUser>,
-) -> Box<dyn Responder>{
+) -> Box<dyn Resp>{
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
@@ -88,31 +88,39 @@ async fn login(
     }
 }
 trait Resp{
-    type T;
-    fn new(_:Self::T)->Self;
+    fn responder(&mut self);
 }
 #[derive(Serialize)]
 pub struct Response {
     result: String,
 }
 
-impl Resp for Response{
-    type T=String;
+impl Response{
     fn new(result: String) -> Self{
         Self { result }
     }
 }    
-
+// impl Resp for Response{
+//     fn responder(&self){}
+// }
 #[derive(Serialize)]
 pub struct AuthResponse{
     authorize:bool,
 }
-impl Resp for AuthResponse{
-    type T=bool;
+impl AuthResponse{
     fn new(auth: bool) -> Self{
         Self {authorize:auth}
     }
 } 
+// impl Resp for AuthResponse{
+//     fn responder(&self){}
+// }
+impl Resp for web::Json<AuthResponse>{
+    fn responder(&mut self){}
+}
+impl Resp for web::Json<Response>{
+    fn responder(&mut self){}
+}
 pub async fn init_dbpool() -> DbPool {
     dotenv().ok();
     let db_url = env::var("DATABASE_URL").unwrap();
