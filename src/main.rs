@@ -112,9 +112,6 @@ impl AuthResponse{
         Self {authorize:auth}
     }
 } 
-// impl Resp for AuthResponse{
-//     fn responder(&self){}
-// }
 impl Resp for web::Json<AuthResponse>{
     fn responder(&mut self){}
 }
