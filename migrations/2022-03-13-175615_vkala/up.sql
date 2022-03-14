@@ -1,0 +1,7 @@
+-- Your SQL goes here
+CREATE TABLE IF NOT EXISTS vkala_users(
+	id SERIAL PRIMARY KEY,
+	uname VARCHAR NOT NULL UNIQUE,
+	passwd VARCHAR NOT NULL,
+	e_mail VARCHAR NOT NULL
+)
