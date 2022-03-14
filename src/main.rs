@@ -13,11 +13,14 @@ use diesel::{
     r2d2::{ConnectionManager, PooledConnection},
     PgConnection,
 };
+use actix_web::http::Error;
 use dotenv::dotenv;
 use error_handler::LoginResponse;
 use r2d2;
 use serde::Serialize;
 use std::env;
+use futures_utils::future::Ready;
+
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type PoolConn = PooledConnection<ConnectionManager<PgConnection>>;
 
@@ -69,7 +72,9 @@ async fn signup(
 async fn login(
     db_pool: web::Data<DbPool>,
     res: web::Json<LoginUser>,
-) -> Box<dyn Resp>{
+) -> Box<dyn Responder<Error,Ready<Result<Response,Error>>>>{
+    // type Error = Error;
+    // type Future = Ready<Result<Response, Error>>;    
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
@@ -86,9 +91,6 @@ async fn login(
             Box::new(web::Json(Response::new("Error processsing request".into())))
         }
     }
-}
-trait Resp{
-    fn responder(&mut self);
 }
 #[derive(Serialize)]
 pub struct Response {
@@ -109,12 +111,7 @@ impl AuthResponse{
         Self {authorize:auth}
     }
 } 
-impl Resp for web::Json<AuthResponse>{
-    fn responder(&mut self){}
-}
-impl Resp for web::Json<Response>{
-    fn responder(&mut self){}
-}
+
 pub async fn init_dbpool() -> DbPool {
     dotenv().ok();
     let db_url = env::var("DATABASE_URL").unwrap();
