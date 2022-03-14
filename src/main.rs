@@ -100,9 +100,6 @@ impl Response{
         Self { result }
     }
 }    
-// impl Resp for Response{
-//     fn responder(&self){}
-// }
 #[derive(Serialize)]
 pub struct AuthResponse{
     authorize:bool,
