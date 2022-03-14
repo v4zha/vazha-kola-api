@@ -69,21 +69,21 @@ async fn signup(
 async fn login(
     db_pool: web::Data<DbPool>,
     res: web::Json<LoginUser>,
-) -> impl Responder{
+) -> Box<dyn Responder>{
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
-        Ok(LoginResponse::Autherize(val))=>{web::Json(Response::Auth(AuthResponse::new(val)))},
+        Ok(LoginResponse::Autherize(val))=>{Box::new(web::Json(AuthResponse::new(val)))},
         Ok(LoginResponse::UserExist(val))=>{
             if val==false{
-               web::Json(Response::Resp(TxtResponse::new("No user Found : )".into())))
+                Box::new(web::Json(Response::new("No user Found : )".into())))
             }
             else{
-                 web::Json(Response::Resp(TxtResponse::new("Auth failed :)".into())))
+                 Box::new(web::Json(Response::new("Auth failed :)".into())))
             }},
         Err(err) => {
             println!("[Error]:\n{:?}", err);
-            web::Json(Response::Resp(TxtResponse::new("Error processsing request".into())))
+            Box::new(web::Json(Response::new("Error processsing request".into())))
         }
     }
 }
@@ -92,11 +92,11 @@ trait Resp{
     fn new(_:Self::T)->Self;
 }
 #[derive(Serialize)]
-pub struct TxtResponse {
+pub struct Response {
     result: String,
 }
 
-impl Resp for TxtResponse{
+impl Resp for Response{
     type T=String;
     fn new(result: String) -> Self{
         Self { result }
@@ -112,12 +112,7 @@ impl Resp for AuthResponse{
     fn new(auth: bool) -> Self{
         Self {authorize:auth}
     }
-}
-#[derive(Serialize)]
-pub enum Response{
-    Auth(AuthResponse),
-    Resp(TxtResponse),
-}
+} 
 pub async fn init_dbpool() -> DbPool {
     dotenv().ok();
     let db_url = env::var("DATABASE_URL").unwrap();
