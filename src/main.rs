@@ -13,13 +13,11 @@ use diesel::{
     r2d2::{ConnectionManager, PooledConnection},
     PgConnection,
 };
-use actix_web::http::Error;
 use dotenv::dotenv;
 use error_handler::LoginResponse;
 use r2d2;
 use serde::Serialize;
 use std::env;
-use futures_utils::future::Ready;
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type PoolConn = PooledConnection<ConnectionManager<PgConnection>>;
@@ -72,19 +70,17 @@ async fn signup(
 async fn login(
     db_pool: web::Data<DbPool>,
     res: web::Json<LoginUser>,
-) -> Box<dyn Responder<Error,Ready<Result<Response,Error>>>>{
-    // type Error = Error;
-    // type Future = Ready<Result<Response, Error>>;    
+) -> impl Responder{
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
-        Ok(LoginResponse::Autherize(val))=>{Box::new(web::Json(AuthResponse::new(val)))},
+        Ok(LoginResponse::Autherize(val))=>{web::Json(AuthResponse::new(val))},
         Ok(LoginResponse::UserExist(val))=>{
             if val==false{
-                Box::new(web::Json(Response::new("No user Found : )".into())))
+                web::Json(Response::new("No user Found : )".into()))
             }
             else{
-                 Box::new(web::Json(Response::new("Auth failed :)".into())))
+                 web::Json(Response::new("Auth failed :)".into()))
             }},
         Err(err) => {
             println!("[Error]:\n{:?}", err);
@@ -98,13 +94,13 @@ pub struct Response {
 }
 
 impl Response{
-    fn new(result: String) -> Self{
-        Self { result }
+    fn new(result: String,authorize:bool) -> Self{
+        Self { result ,authorize}
     }
 }    
 #[derive(Serialize)]
 pub struct AuthResponse{
-    authorize:bool,
+    
 }
 impl AuthResponse{
     fn new(auth: bool) -> Self{
