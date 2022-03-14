@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate diesel;
+extern crate argon2;
 #[path = "./db_mod/db_handler.rs"]
 pub mod db_handler;
 pub mod error_handler;
@@ -8,7 +9,7 @@ pub mod models;
 pub mod schema;
 use self::models::{LoginUser, NewUser};
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer, Result,Responder};
+use actix_web::{web, App, HttpServer,Responder};
 use diesel::{
     r2d2::{ConnectionManager, PooledConnection},
     PgConnection,

@@ -7,9 +7,11 @@ use super::{
 use actix_web::web;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use vkala_users::dsl::*;
+use argon2;
+use rand::Rng;
 
 pub async fn signup_user(pg_conn: PoolConn, data: web::Json<NewUser>) -> Result<(), ApiError> {
-    let user = NewUser::new(&data.uname, &data.passwd,&data.e_mail);
+    let user = NewUser::new(&data.uname, &passwd_gen(&data.passwd),&data.e_mail);
     let res = diesel::insert_into(vkala_users::table)
         .values(&user)
         .on_conflict(uname)
@@ -31,7 +33,19 @@ pub async fn login_user(
         .load::<VkalaUsers>(&pg_conn);
     match result {
         Ok(val) if val.len() == 0 => Ok(LoginResponse::UserExist(false)),
-        Ok(val) => Ok(LoginResponse::Autherize(check_pass(val,data.passwd))),
+        Ok(val) => Ok(LoginResponse::Autherize(check_pass(&val[0].passwd,&data.passwd))),
         Err(err) => Err(ApiError::DbError(err)),
     }
 }
+
+fn check_pass(resp:&str,pass:&str)->bool{
+    let resp=resp.as_bytes();
+    let val=argon2::verify_encoded(&pass, resp);
+    val.unwrap()
+}
+fn passwd_gen(pass:&str)->String{
+    let salt: [u8; 32] = rand::thread_rng().gen();
+    let config = argon2::Config::default();
+    let hash=argon2::hash_encoded(pass.as_bytes(),&salt,&config);
+    hash.unwrap()
+}   
