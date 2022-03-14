@@ -39,6 +39,7 @@ pub async fn login_user(
 }
 
 fn check_pass(resp:&str,pass:&str)->bool{
+    println!("{}",&pass);
     let resp=resp.as_bytes();
     let val=argon2::verify_encoded(&pass, resp);
     val.unwrap()
