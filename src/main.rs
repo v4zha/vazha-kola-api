@@ -74,17 +74,17 @@ async fn login(
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
-        Ok(LoginResponse::Autherize(val))=>{web::Json(AuthResponse::new(val))},
+        Ok(LoginResponse::Autherize(val))=>{web::Json(AuthResponse::new("Auth result".into(),val))},
         Ok(LoginResponse::UserExist(val))=>{
             if val==false{
-                web::Json(Response::new("No user Found : )".into()))
+                web::Json(AuthResponse::new("No user Found : )".into(),false))
             }
             else{
-                 web::Json(Response::new("Auth failed :)".into()))
+                 web::Json(AuthResponse::new("Auth failed :)".into(),false))
             }},
         Err(err) => {
             println!("[Error]:\n{:?}", err);
-            Box::new(web::Json(Response::new("Error processsing request".into())))
+                web::Json(AuthResponse::new("Error processsing request".into(),false))
         }
     }
 }
@@ -94,20 +94,21 @@ pub struct Response {
 }
 
 impl Response{
+    fn new(result: String) -> Self{
+    Self { result }
+    }
+}  
+#[derive(Serialize)]
+pub struct AuthResponse {
+    result: String,
+    authorize:bool,
+}
+
+impl AuthResponse{
     fn new(result: String,authorize:bool) -> Self{
         Self { result ,authorize}
     }
-}    
-#[derive(Serialize)]
-pub struct AuthResponse{
-    
-}
-impl AuthResponse{
-    fn new(auth: bool) -> Self{
-        Self {authorize:auth}
-    }
-} 
-
+}   
 pub async fn init_dbpool() -> DbPool {
     dotenv().ok();
     let db_url = env::var("DATABASE_URL").unwrap();
