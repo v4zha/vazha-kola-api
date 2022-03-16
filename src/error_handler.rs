@@ -1,3 +1,5 @@
+use crate::models::UserProfile;
+
 #[derive(Debug)]
 pub enum ApiError {
     ParseError,
@@ -6,7 +8,11 @@ pub enum ApiError {
 }
 pub enum LoginResponse{
     UserExist(bool),
-    Authorize(bool),
+    Authorize(AuthUser),
+}
+pub struct AuthUser{
+    pub authorize:bool,
+    pub user:UserProfile,
 }
 
 impl From<diesel::result::Error> for ApiError {

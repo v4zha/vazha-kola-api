@@ -1,5 +1,7 @@
+use crate::models::UserProfile;
+
 use super::{
-    error_handler::{ApiError, LoginResponse},
+    error_handler::{ApiError, LoginResponse,AuthUser},
     models::{LoginUser, VkalaUsers, NewUser},
     schema::vkala_users,
     PoolConn,
@@ -31,7 +33,7 @@ pub async fn login_user(
     let result=get_users(pg_conn,u_name).await;
     match result {
         Ok(val) if val.len() == 0 => Ok(LoginResponse::UserExist(false)),
-        Ok(val) => Ok(LoginResponse::Authorize(check_pass(&val[0].passwd,&data.passwd))),
+        Ok(val) => Ok(LoginResponse::Authorize(AuthUser{user:UserProfile::from(val[0].clone()),authorize:check_pass(&val[0].passwd,&data.passwd)})),
         Err(err) => Err(ApiError::DbError(err)),
     }
 }
