@@ -75,7 +75,12 @@ async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:Stri
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
         Ok(LoginResponse::Authorize(val)) => {
-        web::Json(AuthResponse::new("Auth result".into(),tokenize(val.user,secret),val.authorize))
+            if val.authorize{
+            web::Json(AuthResponse::new("Auth result".into(),tokenize(val.user,secret),val.authorize))
+            }
+            else{
+                web::Json(AuthResponse::new("Auth failed :)".into(),"".into(),false))
+            }
         }
         Ok(LoginResponse::UserExist(val)) => {
             if val == false {
