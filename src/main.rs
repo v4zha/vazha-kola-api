@@ -34,6 +34,7 @@ async fn main() -> std::io::Result<()> {
     let port = env::var("PORT").expect("Error parsing Port Var");
     let host = env::var("HOST").expect("Error parsing HOST Var");
     let ip_port = format!("{}:{}", host, port);
+    let secret=env::var("SECRET_KEY").expect("Error parsing SECRET_KEY Var");
     println!("server running on : {}", ip_port);
     HttpServer::new(move || {
         //test-env cors :)
@@ -43,6 +44,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .data(db_pool.clone())
+            .data(secret.clone())
             .route("/signup", web::post().to(signup))
             // .route("/disp_data",web::get().to(disp_data))
             .route("/login", web::post().to(login))
@@ -68,23 +70,23 @@ async fn signup(db_pool: web::Data<DbPool>, res: web::Json<NewUser>) -> impl Res
     }
 }
 
-async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>) -> impl Responder {
+async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:String) -> impl Responder {
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
         Ok(LoginResponse::Authorize(val)) => {
-            web::Json(AuthResponse::new("Auth result".into(), val.authorize))
+        web::Json(AuthResponse::new("Auth result".into(),tokenize(val.user,secret),val.authorize))
         }
         Ok(LoginResponse::UserExist(val)) => {
             if val == false {
-                web::Json(AuthResponse::new("No user Found : )".into(), false))
+                web::Json(AuthResponse::new("No user Found : )".into(),"".into(), false))
             } else {
-                web::Json(AuthResponse::new("Auth failed :)".into(), false))
+                web::Json(AuthResponse::new("Auth failed :)".into(),"".into() ,false))
             }
         }
         Err(err) => {
             println!("[Error]:\n{:?}", err);
-            web::Json(AuthResponse::new("Error processsing request".into(), false))
+            web::Json(AuthResponse::new("Error processsing request".into(), "".into(),false))
         }
     }
 }
@@ -101,12 +103,13 @@ impl Response {
 #[derive(Serialize)]
 pub struct AuthResponse {
     result: String,
+    token:String,
     authorize: bool,
 }
 
 impl AuthResponse {
-    fn new(result: String, authorize: bool) -> Self {
-        Self { result, authorize }
+    fn new(result: String,token:String,authorize: bool) -> Self {
+    Self { result,token,authorize }
     }
 }
 pub async fn init_dbpool() -> DbPool {
