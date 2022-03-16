@@ -3,6 +3,7 @@ extern crate diesel;
 extern crate argon2;
 #[path="./db_mod/auth.rs"]
 pub mod auth;
+use auth::tokenize;
 #[path = "./db_mod/db_handler.rs"]
 pub mod db_handler;
 pub mod error_handler;
