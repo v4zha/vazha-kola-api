@@ -75,7 +75,7 @@ async fn login(
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
-        Ok(LoginResponse::Autherize(val))=>{web::Json(AuthResponse::new("Auth result".into(),val))},
+        Ok(LoginResponse::Authorize(val))=>{web::Json(AuthResponse::new("Auth result".into(),val))},
         Ok(LoginResponse::UserExist(val))=>{
             if val==false{
                 web::Json(AuthResponse::new("No user Found : )".into(),false))

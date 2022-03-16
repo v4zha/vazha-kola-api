@@ -5,7 +5,7 @@ use super::{
     PoolConn,
 };
 use actix_web::web;
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl,result};
 use vkala_users::dsl::*;
 use argon2;
 use rand::Rng;
@@ -28,12 +28,10 @@ pub async fn login_user(
     data: web::Json<LoginUser>,
 ) -> Result<LoginResponse, ApiError> {
     let u_name: String = format!("{}", data.uname);
-    let result = vkala_users::dsl::vkala_users
-        .filter(vkala_users::dsl::uname.eq(u_name))
-        .load::<VkalaUsers>(&pg_conn);
+    let result=get_users(pg_conn,u_name).await;
     match result {
         Ok(val) if val.len() == 0 => Ok(LoginResponse::UserExist(false)),
-        Ok(val) => Ok(LoginResponse::Autherize(check_pass(&val[0].passwd,&data.passwd))),
+        Ok(val) => Ok(LoginResponse::Authorize(check_pass(&val[0].passwd,&data.passwd))),
         Err(err) => Err(ApiError::DbError(err)),
     }
 }
@@ -48,4 +46,12 @@ fn passwd_gen(pass:&str)->String{
     let config = argon2::Config::default();
     let hash=argon2::hash_encoded(pass.as_bytes(),&salt,&config);
     hash.unwrap()
-}   
+}
+
+async fn get_users(pg_conn:PoolConn,u_name:String)->Result<Vec<VkalaUsers>,result::Error>{
+
+    let result = vkala_users::dsl::vkala_users
+        .filter(vkala_users::dsl::uname.eq(u_name))
+        .load::<VkalaUsers>(&pg_conn);
+    result
+}

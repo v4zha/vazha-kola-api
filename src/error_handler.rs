@@ -6,7 +6,7 @@ pub enum ApiError {
 }
 pub enum LoginResponse{
     UserExist(bool),
-    Autherize(bool),
+    Authorize(bool),
 }
 
 impl From<diesel::result::Error> for ApiError {
