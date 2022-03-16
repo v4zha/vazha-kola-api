@@ -13,6 +13,7 @@ pub mod schema;
 use self::models::{LoginUser, NewUser};
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer, Responder};
+use actix_web_httpauth::headers::authorization::{Authorization, Basic};
 use diesel::{
     r2d2::{ConnectionManager, PooledConnection},
     PgConnection,
@@ -48,6 +49,7 @@ async fn main() -> std::io::Result<()> {
             .route("/signup", web::post().to(signup))
             // .route("/disp_data",web::get().to(disp_data))
             .route("/login", web::post().to(login))
+            .route("/test",web::get().to(test_user))
     })
     .bind(ip_port)
     .expect("Error binding to Port")
@@ -94,6 +96,9 @@ async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:Stri
             web::Json(AuthResponse::new("Error processsing request".into(), "".into(),false))
         }
     }
+}
+async fn test_usr()->impl Responder {
+    web::Json(Response::new("You are allowed to view this page",into()))
 }
 #[derive(Serialize)]
 pub struct Response {
