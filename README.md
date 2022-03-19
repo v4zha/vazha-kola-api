@@ -13,7 +13,8 @@ Vazha Kola Api is a REST API written in Rust using Actix web framework : ) .
 - JWT Authorization<br>
 
 ## Installation
-clone the repo<br>
+- clone the repo<br>
+- Alter the CORS permission for use in production.
 
 Run the package in testing
 
@@ -28,4 +29,6 @@ cargo build --release
 ```
 
 ## To-dos
+- Add exp to JWT
 - integrate with vazhaKola Project phase 2.
+
