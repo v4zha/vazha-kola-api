@@ -26,14 +26,17 @@ pub struct Authorize{
             Err(_)=>false
         }
     }
+    fn parse(bearer:String)->String{
+        bearer.replace("Bearer ","")
+    }
 }
 impl FromRequest for Authorize{
     type Error=ApiError;
     type Future=Ready<Result<Self,Self::Error>>;
     type Config=();
     fn from_request(req:&HttpRequest,_payload:&mut dev::Payload)->Self::Future{
-        let auth=req.headers().get("Authorization").unwrap();
-        println!("{:?}",auth);
-        ok(Authorize::new("al_vazha".into()))
+        let auth=req.headers().get("Authorization").unwrap().to_str().unwrap();
+        let token=Authorize::parse(auth.into());
+        ok(Authorize::new(token))
     }
 }
