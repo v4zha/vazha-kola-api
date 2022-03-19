@@ -1,5 +1,6 @@
 use super::models::UserProfile;
 use std::collections::HashSet;
+use actix_http::http::header;
 use actix_web::{FromRequest,HttpRequest,dev};
 use futures::future::{Ready,ok};
 use jsonwebtoken::{encode,decode,DecodingKey, Header,EncodingKey,Algorithm,Validation};
@@ -32,7 +33,8 @@ impl FromRequest for Authorize{
     type Future=Ready<Result<Self,Self::Error>>;
     type Config=();
     fn from_request(req:&HttpRequest,_payload:&mut dev::Payload)->Self::Future{
-        println!("{:#?}",req.headers());
+        let auth=req.headers().get(header::WWW_AUTHENTICATE).unwrap();
+        println!("{:?}",auth);
         ok(Authorize::new("al_vazha".into()))
     }
 }
