@@ -97,8 +97,6 @@ async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:web:
     }
 }
 async fn test_usr(auth:Authorize,secret:web::Data<String>)->impl Responder {
-    println!("{:?}",auth);
-    println!("{}",secret.to_string());
     if auth.authorize(secret.to_string()){
         web::Json(Response::new("You are allowed to view this page".into()))
     }
