@@ -2,13 +2,13 @@
 extern crate diesel;
 extern crate argon2;
 pub mod tests;
-#[path="./db_mod/authorize.rs"]
+#[path="./handlers/authorize.rs"]
 pub mod authorize;
 use authorize::{Authorize};
-#[path = "./db_mod/db_handler.rs"]
+#[path = "./handlers/db_handler.rs"]
 pub mod db_handler;
 pub mod error_handler;
-#[path = "./db_mod/models.rs"]
+#[path = "./handlers/models.rs"]
 pub mod models;
 pub mod schema;
 use self::models::{LoginUser, NewUser};
