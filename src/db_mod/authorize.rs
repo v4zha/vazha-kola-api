@@ -7,21 +7,20 @@ use super::error_handler::ApiError;
 
 #[derive(Debug)]
 pub struct Authorize{
-    key:String,
+    token:String,
 }
     impl  Authorize{
-    pub fn new(key:String)->Self{
-        Self{key}
+    pub fn new(token:String)->Self{
+        Self{token}
     }
-    pub fn tokenize(&self,user:UserProfile)->String{
-        encode(&Header::default(),&user,&EncodingKey::from_secret(&self.key.as_ref())).unwrap()
+    pub fn tokenize(key:String,user:UserProfile)->String{
+        encode(&Header::default(),&user,&EncodingKey::from_secret(key.as_ref())).unwrap()
     }
-
-    pub fn authorize(&self,token:String)->bool{
+    pub fn authorize(&self,key:String)->bool{
         let mut validation =Validation::new(Algorithm::HS256);
         validation.validate_exp=false;
         validation.required_spec_claims=HashSet::new();
-        let dec=decode::<UserProfile>(&token, &DecodingKey::from_secret(self.key.as_ref()),&validation);
+        let dec=decode::<UserProfile>(&self.token, &DecodingKey::from_secret(key.as_ref()),&validation);
         match dec{
             Ok(val)=>{println!("{:?}",val.claims);true},
             Err(_)=>false
@@ -33,7 +32,6 @@ impl FromRequest for Authorize{
     type Future=Ready<Result<Self,Self::Error>>;
     type Config=();
     fn from_request(_req:&HttpRequest,_payload:&mut dev::Payload)->Self::Future{
-        let x=Authorize::new("halle_looyah".into());
-        ok(x)
+        ok(Authorize::new("al_vazha"))
     }
 }

@@ -21,7 +21,7 @@ use dotenv::dotenv;
 use error_handler::LoginResponse;
 use r2d2;
 use serde::{Serialize};
-use std::env;
+use std::{env, str::pattern::StrSearcher};
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type PoolConn = PooledConnection<ConnectionManager<PgConnection>>;
@@ -39,12 +39,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         //test-env cors :)
         //use white_list env variable to white_list origins in production
-        let auth=Authorize::new(secret.to_owned());
         let cors = Cors::permissive();
         //  .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT]);
         App::new()
             .wrap(cors)
-            .data(auth)
+            .data(secret)
             .data(db_pool.clone())
             .route("/signup", web::post().to(signup))
             // .route("/disp_data",web::get().to(disp_data))
@@ -72,13 +71,13 @@ async fn signup(db_pool: web::Data<DbPool>, res: web::Json<NewUser>) -> impl Res
     }
 }
 
-async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,auth:Authorize) -> impl Responder {
+async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:String) -> impl Responder {
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
         Ok(LoginResponse::Authorize(val)) => {
             if val.authorize{
-            web::Json(AuthResponse::new("Auth result".into(),auth.tokenize(val.user),val.authorize))
+            web::Json(AuthResponse::new("Auth result".into(),Authorize::tokenize(secret,val.user),val.authorize))
             }
             else{
                 web::Json(AuthResponse::new("Auth failed :)".into(),"".into(),false))
@@ -97,9 +96,10 @@ async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,auth:Author
         }
     }
 }
-async fn test_usr(auth:Authorize)->impl Responder {
+async fn test_usr(auth:Authorize,secret:String)->impl Responder {
     println!("{:?}",auth);
-    if auth.authorize("secret".into()){
+    println!("{:?}",secret);
+    if auth.authorize(secret){
         web::Json(Response::new("You are allowed to view this page".into()))
     }
     else{
