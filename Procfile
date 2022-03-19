@@ -1,1 +1,1 @@
-web: ./target/release/vazha-kala-api
+web: ./target/release/vazha-kola-api

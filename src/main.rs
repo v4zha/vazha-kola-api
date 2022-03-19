@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel;
 extern crate argon2;
+pub mod tests;
 #[path="./db_mod/authorize.rs"]
 pub mod authorize;
 use authorize::{Authorize};

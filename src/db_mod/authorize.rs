@@ -26,7 +26,7 @@ pub struct Authorize{
             Err(_)=>false
         }
     }
-    fn parse(bearer:String)->String{
+    pub fn parse(bearer:String)->String{
         bearer.replace("Bearer ","")
     }
 }

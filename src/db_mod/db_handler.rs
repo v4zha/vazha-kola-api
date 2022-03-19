@@ -2,19 +2,23 @@ use crate::models::UserProfile;
 
 use super::{
     error_handler::{ApiError, AuthUser, LoginResponse},
-    models::{LoginUser, NewUser, VkalaUsers},
-    schema::vkala_users,
+    models::{LoginUser, NewUser, VkolaUsers},
+    schema::vkola_users,
     PoolConn,
 };
 use actix_web::web;
 use argon2;
-use diesel::{result, ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{result, ExpressionMethods,RunQueryDsl};
+use diesel::QueryDsl;
 use rand::Rng;
-use vkala_users::dsl::*;
+use vkola_users::dsl::*;
 
+//SignUp user
+//connect to DB
+//prevents duplicate entry by checking uname conflict [uname set as unique in DB Schema]
 pub async fn signup_user(pg_conn: PoolConn, data: web::Json<NewUser>) -> Result<(), ApiError> {
     let user = NewUser::new(&data.uname, &passwd_gen(&data.passwd), &data.e_mail);
-    let res = diesel::insert_into(vkala_users::table)
+    let res = diesel::insert_into(vkola_users::table)
         .values(&user)
         .on_conflict(uname)
         .do_nothing()
@@ -25,6 +29,8 @@ pub async fn signup_user(pg_conn: PoolConn, data: web::Json<NewUser>) -> Result<
     }
 }
 
+//Login User
+//validating password by hashing and fetching DB entry
 pub async fn login_user(
     pg_conn: PoolConn,
     data: web::Json<LoginUser>,
@@ -40,22 +46,23 @@ pub async fn login_user(
         Err(err) => Err(ApiError::DbError(err)),
     }
 }
-
-fn check_pass(pass: &str, resp: &str) -> bool {
+//Check Password Hash to verify user
+pub fn check_pass(pass: &str, resp: &str) -> bool {
     let resp = resp.as_bytes();
     let val = argon2::verify_encoded(&pass, resp);
     val.unwrap()
 }
-fn passwd_gen(pass: &str) -> String {
+//Generate Password Hash to store in DB
+pub fn passwd_gen(pass: &str) -> String {
     let salt: [u8; 32] = rand::thread_rng().gen();
     let config = argon2::Config::default();
     let hash = argon2::hash_encoded(pass.as_bytes(), &salt, &config);
     hash.unwrap()
 }
-
-async fn get_users(pg_conn: PoolConn, u_name: String) -> Result<Vec<VkalaUsers>, result::Error> {
-    let result = vkala_users::dsl::vkala_users
-        .filter(vkala_users::dsl::uname.eq(u_name))
-        .load::<VkalaUsers>(&pg_conn);
+//Get User detials based on user_name
+async fn get_users(pg_conn: PoolConn, u_name: String) -> Result<Vec<VkolaUsers>, result::Error> {
+    let result = vkola_users::dsl::vkola_users
+        .filter(vkola_users::dsl::uname.eq(u_name))
+        .load::<VkolaUsers>(&pg_conn);
     result
 }

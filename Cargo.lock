@@ -2356,7 +2356,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "vazha-kala-api"
+name = "vazha-kola-api"
 version = "0.1.0"
 dependencies = [
  "actix-cors",
