@@ -29,6 +29,5 @@ cargo build --release
 ```
 
 ## To-dos
-- Add exp to JWT
 - integrate with vazhaKola Project phase 2.
 

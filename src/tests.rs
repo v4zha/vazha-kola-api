@@ -9,7 +9,7 @@ fn test_pass_gen(){
 #[test]
 fn test_auth(){
     let secret="Vapp4Ch1Es_LeG4cy";
-    let token=Authorize::tokenize(secret.into(),UserProfile{uname:"v4zha".into(),e_mail:"kadavul@v4zha.me".into()});
+let token=Authorize::tokenize(secret.into(),UserProfile::new("v4zha".into(),"kadavul@v4zha.me".into()));
     let token=format!("Bearer {}",token);
     let auth=Authorize::new(Authorize::parse(token));
     assert_eq!(auth.authorize(secret.into()),true);
