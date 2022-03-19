@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate diesel;
 extern crate argon2;
-#[path="./db_mod/auth.rs"]
-pub mod auth;
-use auth::tokenize;
+#[path="./db_mod/authorize.rs"]
+pub mod authorize;
+use authorize::{Authorize};
 #[path = "./db_mod/db_handler.rs"]
 pub mod db_handler;
 pub mod error_handler;
@@ -13,15 +13,14 @@ pub mod schema;
 use self::models::{LoginUser, NewUser};
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer, Responder};
-use actix_web_httpauth::headers::authorization::{Authorization, Basic};
 use diesel::{
     r2d2::{ConnectionManager, PooledConnection},
-    PgConnection,
+    PgConnection
 };
 use dotenv::dotenv;
 use error_handler::LoginResponse;
 use r2d2;
-use serde::Serialize;
+use serde::{Serialize};
 use std::env;
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
@@ -40,16 +39,17 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         //test-env cors :)
         //use white_list env variable to white_list origins in production
+        let auth=Authorize::new(secret.to_owned());
         let cors = Cors::permissive();
         //  .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT]);
         App::new()
             .wrap(cors)
+            .data(auth)
             .data(db_pool.clone())
-            .data(secret.clone())
             .route("/signup", web::post().to(signup))
             // .route("/disp_data",web::get().to(disp_data))
             .route("/login", web::post().to(login))
-            .route("/test",web::get().to(test_user))
+            .route("/test",web::get().to(test_usr))
     })
     .bind(ip_port)
     .expect("Error binding to Port")
@@ -72,13 +72,13 @@ async fn signup(db_pool: web::Data<DbPool>, res: web::Json<NewUser>) -> impl Res
     }
 }
 
-async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:String) -> impl Responder {
+async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,auth:Authorize) -> impl Responder {
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
         Ok(LoginResponse::Authorize(val)) => {
             if val.authorize{
-            web::Json(AuthResponse::new("Auth result".into(),tokenize(val.user,secret),val.authorize))
+            web::Json(AuthResponse::new("Auth result".into(),auth.tokenize(val.user),val.authorize))
             }
             else{
                 web::Json(AuthResponse::new("Auth failed :)".into(),"".into(),false))
@@ -97,8 +97,14 @@ async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:Stri
         }
     }
 }
-async fn test_usr()->impl Responder {
-    web::Json(Response::new("You are allowed to view this page",into()))
+async fn test_usr(auth:Authorize)->impl Responder {
+    println!("{:?}",auth);
+    if auth.authorize("secret".into()){
+        web::Json(Response::new("You are allowed to view this page".into()))
+    }
+    else{
+        web::Json(Response::new("You are not authorized . Sorry : )".into()))
+    }
 }
 #[derive(Serialize)]
 pub struct Response {
