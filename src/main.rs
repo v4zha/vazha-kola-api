@@ -21,7 +21,7 @@ use dotenv::dotenv;
 use error_handler::LoginResponse;
 use r2d2;
 use serde::{Serialize};
-use std::{env, str::pattern::StrSearcher};
+use std::env;
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type PoolConn = PooledConnection<ConnectionManager<PgConnection>>;
@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
         //  .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT]);
         App::new()
             .wrap(cors)
-            .data(secret)
+            .data(secret.clone())
             .data(db_pool.clone())
             .route("/signup", web::post().to(signup))
             // .route("/disp_data",web::get().to(disp_data))

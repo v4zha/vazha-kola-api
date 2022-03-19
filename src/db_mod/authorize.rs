@@ -32,6 +32,6 @@ impl FromRequest for Authorize{
     type Future=Ready<Result<Self,Self::Error>>;
     type Config=();
     fn from_request(_req:&HttpRequest,_payload:&mut dev::Payload)->Self::Future{
-        ok(Authorize::new("al_vazha"))
+        ok(Authorize::new("al_vazha".into()))
     }
 }
