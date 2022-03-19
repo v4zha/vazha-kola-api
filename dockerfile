@@ -1,4 +1,4 @@
 FROM rust:1.49 as builder
 COPY ./ ./
 RUN cargo build --release
-CMD [ "./target/release/vazha-kala-api" ]
+CMD [ "./target/release/vazha-kola-api" ]
