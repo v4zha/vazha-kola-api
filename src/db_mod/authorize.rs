@@ -31,7 +31,8 @@ impl FromRequest for Authorize{
     type Error=ApiError;
     type Future=Ready<Result<Self,Self::Error>>;
     type Config=();
-    fn from_request(_req:&HttpRequest,_payload:&mut dev::Payload)->Self::Future{
+    fn from_request(req:&HttpRequest,_payload:&mut dev::Payload)->Self::Future{
+        println!("{:#?}",req.headers());
         ok(Authorize::new("al_vazha".into()))
     }
 }
