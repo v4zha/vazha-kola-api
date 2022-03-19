@@ -71,13 +71,13 @@ async fn signup(db_pool: web::Data<DbPool>, res: web::Json<NewUser>) -> impl Res
     }
 }
 
-async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:String) -> impl Responder {
+async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:web::Data<String>) -> impl Responder {
     let db_conn = db_pool.get().expect("Error creating Dbconnector");
     let resp = db_handler::login_user(db_conn, res).await;
     match resp {
         Ok(LoginResponse::Authorize(val)) => {
             if val.authorize{
-            web::Json(AuthResponse::new("Auth result".into(),Authorize::tokenize(secret,val.user),val.authorize))
+            web::Json(AuthResponse::new("Auth result".into(),Authorize::tokenize(secret.to_string(),val.user),val.authorize))
             }
             else{
                 web::Json(AuthResponse::new("Auth failed :)".into(),"".into(),false))
@@ -96,10 +96,10 @@ async fn login(db_pool: web::Data<DbPool>, res: web::Json<LoginUser>,secret:Stri
         }
     }
 }
-async fn test_usr(auth:Authorize,secret:String)->impl Responder {
+async fn test_usr(auth:Authorize,secret:web::Data<String>)->impl Responder {
     println!("{:?}",auth);
-    println!("{:?}",secret);
-    if auth.authorize(secret){
+    println!("{}",secret.to_string());
+    if auth.authorize(secret.to_string()){
         web::Json(Response::new("You are allowed to view this page".into()))
     }
     else{
